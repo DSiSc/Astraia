@@ -10,6 +10,10 @@ import (
 	"sort"
 )
 
+const (
+	clientIdentifier = "geth" // Client identifier to advertise over the network
+)
+
 var (
 	// Git SHA1 commit hash of the release (set via linker flags)
 	gitCommit = ""
@@ -36,8 +40,15 @@ func init() {
 	app.Copyright = "Copyright 2018-2023 The justitia Authors"
 	//accountCmdType := reflect.TypeOf(cmd.AccountCommand)
 	//fmt.Println(accountCmdType)
-
+	app.Commands = []cli.Command{
+		consoleCommand,
+		attachCommand,
+		javascriptCommand,
+	}
 	app.Commands = append(app.Commands, cmd.AccountCommand)
+	//app.Commands = append(app.Commands, consoleCommand)
+	//app.Commands = append(app.Commands, attachCommand)
+	//app.Commands = append(app.Commands, javascriptCommand)
 
 	sort.Sort(cli.CommandsByName(app.Commands))
 

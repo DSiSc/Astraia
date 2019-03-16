@@ -4,4 +4,5 @@ apigateway:
     hostname:
       127.0.0.1
     port:
-      47768
+      8545
+      #47768
