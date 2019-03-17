@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DSiSc/crypto-suite/rlp"
+	"github.com/DSiSc/lightClient/config"
 	"github.com/DSiSc/p2p/common"
 	wcommon "github.com/DSiSc/wallet/common"
 	"math/big"
@@ -37,6 +38,7 @@ import (
 	"github.com/DSiSc/wallet/accounts/keystore"
 	wutils "github.com/DSiSc/wallet/utils"
 	web3cmn "github.com/DSiSc/web3go/common"
+	"github.com/DSiSc/web3go/web3"
 )
 
 var (
@@ -103,6 +105,9 @@ type Client struct {
 
 	//use to manager keystore wallets
 	keystore *keystore.KeyStore
+
+	//use to call apigateway
+	web3 *web3.Web3
 
 	// for dispatch
 	close       chan struct{}
@@ -222,11 +227,16 @@ func initClient(conn ServerCodec) *Client {
 	}
 
 	_keystore := keystore.NewKeyStore(keydir, scryptN, scryptP)
+
+	hostname := config.GetApiGatewayHostName()
+	port := config.GetApiGatewayPort()
+	web, _ := wutils.NewWeb3(hostname, port, false)
 	c := &Client{
 		//idgen:       idgen,
 		isHTTP:      isHTTP,
 		isLocal:     true,
 		keystore:    _keystore,
+		web3:        web,
 		//services:    services,
 		writeConn:   conn,
 		close:       make(chan struct{}),
@@ -564,7 +574,8 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		break
 
 	case "eth_sendRawTransaction":
-		hash, err := wutils.SendRawTransactionWeb3(result[0])
+		fmt.Println("result: ", result[0])
+		hash, err := wutils.SendRawTransactionWeb3(c.web3, result[0])
 		if err != nil {
 			fmt.Println("sendRawTransaction failed, err = ", err)
 			break
@@ -573,6 +584,7 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 
 		break
 
+	//TODO: verify legal(important)
 	case "personal_signTransaction":
 		var rawMsg []json.RawMessage
 		err := json.Unmarshal(msg.Params, &rawMsg)
@@ -611,6 +623,8 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 			fmt.Println("eth_sendTransaction rlp encode failed", "tx", result, "err", err)
 		}
 
+
+		fmt.Println("signcode = ", wcommon.ToHex(data))
 		fmt.Println("signcode = ", wcommon.Bytes2Hex(data))
 
 	default:
