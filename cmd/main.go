@@ -37,16 +37,11 @@ func init() {
 	app.Action = lightClient
 	app.HideVersion = true
 	app.Copyright = "Copyright 2018-2023 The justitia Authors"
-	//accountCmdType := reflect.TypeOf(cmd.AccountCommand)
-	//fmt.Println(accountCmdType)
+
 	app.Commands = []cli.Command{
 		consoleCommand,
 	}
 	app.Commands = append(app.Commands, cmd.AccountCommand)
-	//app.Commands = append(app.Commands, consoleCommand)
-	//app.Commands = append(app.Commands, attachCommand)
-	//app.Commands = append(app.Commands, javascriptCommand)
-
 	sort.Sort(cli.CommandsByName(app.Commands))
 
 	app.Flags = append(app.Flags, nodeFlags...)
@@ -56,8 +51,6 @@ func init() {
 	}
 
 	app.After = func(ctx *cli.Context) error {
-		//debug.Exit()
-		//console.Stdin.Close()
 		return nil
 	}
 }

@@ -79,19 +79,7 @@ func remoteConsole(ctx *cli.Context) error {
 	// Attach to a remotely running geth instance and start the JavaScript console
 	endpoint := ctx.Args().First()
 	if endpoint == "" {
-		//path := node.DefaultDataDir()
-		//path := ""
-		//if ctx.GlobalIsSet(wutils.DataDirFlag.Name) {
-		//	path = ctx.GlobalString(wutils.DataDirFlag.Name)
-		//}
-		//if path != "" {
-		//	if ctx.GlobalBool(utils.TestnetFlag.Name) {
-		//		path = filepath.Join(path, "testnet")
-		//	} else if ctx.GlobalBool(utils.RinkebyFlag.Name) {
-		//		path = filepath.Join(path, "rinkeby")
-		//	}
-		//}
-		//endpoint = fmt.Sprintf("%s/geth.ipc", path)
+		//read config file
 		hostname := config.GetApiGatewayHostName()
 		port := config.GetApiGatewayPort()
 		endpoint = fmt.Sprintf("http://%s:/%s", hostname, port)
@@ -138,50 +126,4 @@ func dialRPC(endpoint string) (*rpc.Client, error) {
 		endpoint = endpoint[4:]
 	}
 	return rpc.Dial(endpoint)
-}
-
-// ephemeralConsole starts a new geth node, attaches an ephemeral JavaScript
-// console to it, executes each of the files specified as arguments and tears
-// everything down.
-func ephemeralConsole(ctx *cli.Context) error {
-	/*//Create and start the node based on the CLI flags
-	node := makeFullNode(ctx)
-	startNode(ctx, node)
-	defer node.Close()
-
-	// Attach to the newly started node and start the JavaScript console
-	client, err := node.Attach()
-	if err != nil {
-		utils.Fatalf("Failed to attach to the inproc geth: %v", err)
-	}
-	config := console.Config{
-		DataDir: utils.MakeDataDir(ctx),
-		DocRoot: ctx.GlobalString(utils.JSpathFlag.Name),
-		Client:  client,
-		Preload: utils.MakeConsolePreloads(ctx),
-	}
-
-	console, err := console.New(config)
-	if err != nil {
-		utils.Fatalf("Failed to start the JavaScript console: %v", err)
-	}
-	defer console.Stop(false)
-
-	// Evaluate each of the specified JavaScript files
-	for _, file := range ctx.Args() {
-		if err = console.Execute(file); err != nil {
-			utils.Fatalf("Failed to execute %s: %v", file, err)
-		}
-	}
-	// Wait for pending callbacks, but stop for Ctrl-C.
-	abort := make(chan os.Signal, 1)
-	signal.Notify(abort, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		<-abort
-		os.Exit(0)
-	}()
-	console.Stop(true)
-	*/
-	return nil
 }
