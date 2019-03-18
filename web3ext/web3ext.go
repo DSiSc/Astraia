@@ -587,32 +587,6 @@ web3._extend({
 	property: 'personal',
 	methods: [
 		new web3._extend.Method({
-			name: 'importRawKey',
-			call: 'personal_importRawKey',
-			params: 2
-		}),
-		new web3._extend.Method({
-			name: 'sign',
-			call: 'personal_sign',
-			params: 3,
-			inputFormatter: [null, web3._extend.formatters.inputAddressFormatter, null]
-		}),
-		new web3._extend.Method({
-			name: 'ecRecover',
-			call: 'personal_ecRecover',
-			params: 2
-		}),
-		new web3._extend.Method({
-			name: 'openWallet',
-			call: 'personal_openWallet',
-			params: 2
-		}),
-		new web3._extend.Method({
-			name: 'deriveAccount',
-			call: 'personal_deriveAccount',
-			params: 3
-		}),
-		new web3._extend.Method({
 			name: 'signTransaction',
 			call: 'personal_signTransaction',
 			params: 2,

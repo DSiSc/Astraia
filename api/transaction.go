@@ -1,16 +1,17 @@
 package api
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/DSiSc/craft/types"
 	"github.com/DSiSc/lightClient/config"
 	"github.com/DSiSc/wallet/common"
+	local "github.com/DSiSc/wallet/core/types"
+	web3cmn "github.com/DSiSc/web3go/common"
 	"github.com/DSiSc/web3go/provider"
 	"github.com/DSiSc/web3go/rpc"
 	"github.com/DSiSc/web3go/web3"
-	web3cmn "github.com/DSiSc/web3go/common"
-	local "github.com/DSiSc/wallet/core/types"
 	"strconv"
 )
 
@@ -77,4 +78,15 @@ func SendRawTransaction(tx *types.Transaction) (common.Hash, error) {
 	return common.Hash(hash), err
 }
 
+func GetTransactionByHash(web *web3.Web3, txHash string) ( *web3cmn.Transaction, error) {
+	if web == nil {
+		return nil, errors.New("GetTransactionByHashWbe3 has call error web is nil")
+	}
 
+	bytes := web3cmn.HexToBytes(txHash)
+	tx, err :=web.Eth.GetTransactionByHash(web3cmn.NewHash(bytes))
+	if err != nil {
+		return nil, err
+	}
+	return tx, err
+}

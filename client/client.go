@@ -23,12 +23,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DSiSc/crypto-suite/rlp"
+	"github.com/DSiSc/lightClient/api"
 	"github.com/DSiSc/lightClient/config"
 	"github.com/DSiSc/p2p/common"
 	wcommon "github.com/DSiSc/wallet/common"
 	"math/big"
 	"net/url"
-	"reflect"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -315,7 +315,6 @@ func (c *Client) CallContext(ctx context.Context, result interface{}, method str
 	if c.isHTTP {
 
 		//no attach a node,call local function
-		fmt.Println("callContext", method, args, reflect.TypeOf(args))
 		err = c.sendLocal(ctx, op, msg)
 		//err = c.sendHTTP(ctx, op, msg)
 
@@ -513,10 +512,8 @@ func (c *Client) send(ctx context.Context, op *requestOp, msg interface{}) error
 }
 
 func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessage) error {
-	fmt.Println(msg.Method)
 	result := []string{}
 	json.Unmarshal(msg.Params, &result)
-	fmt.Println(result)
 
 	switch msg.Method {
 	case "personal_newAccount":
@@ -584,48 +581,54 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 
 		break
 
+	case "eth_getTransactionByHash":
+		tx, err := api.GetTransactionByHash(c.web3, result[0])
+		if err != nil {
+			fmt.Println("eth_getTransactionByHash failed, err = ", err)
+			break
+		}
+		fmt.Println(tx.String())
+
 	//TODO: verify legal(important)
 	case "personal_signTransaction":
 		var rawMsg []json.RawMessage
 		err := json.Unmarshal(msg.Params, &rawMsg)
 		if err != nil {
-			fmt.Println("eth_sendTransaction, err = ", err)
+			fmt.Println("personal_signTransaction failed, err = ", err)
 			break
 		}
 
 		var result Tx
 		err = json.Unmarshal(rawMsg[0], &result)
 		if err != nil {
-			fmt.Println("eth_sendTransaction, err = ", err)
+			fmt.Println("personal_signTransaction, err = ", err)
 			break
 		}
 
 		var password string
 		err = json.Unmarshal(rawMsg[1], &password)
 		if err != nil {
-			fmt.Println("eth_sendTransaction, err = ", err)
+			fmt.Println("personal_signTransaction, err = ", err)
 			break
 		}
 
 		var transaction ctypes.Transaction
 		transaction, err = TxToTransaction(result)
 		if err != nil {
-			fmt.Println("eth_sendTransaction, err = ", err)
+			fmt.Println("personal_signTransaction, err = ", err)
 			break
 		}
 		signed, err := wutils.SignTxByPassWord(&transaction, password)
 		if err != nil {
-			fmt.Println("eth_sendTransaction sign failed", "tx", result, "err", err)
+			fmt.Println("personal_signTransaction sign failed", "tx", result, "err", err)
 			break
 		}
 		data, err := rlp.EncodeToBytes(signed)
 		if err != nil {
-			fmt.Println("eth_sendTransaction rlp encode failed", "tx", result, "err", err)
+			fmt.Println("personal_signTransaction rlp encode failed", "tx", result, "err", err)
 		}
 
-
 		fmt.Println("signcode = ", wcommon.ToHex(data))
-		fmt.Println("signcode = ", wcommon.Bytes2Hex(data))
 
 	default:
 		fmt.Println("default")
