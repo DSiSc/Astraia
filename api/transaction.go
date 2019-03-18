@@ -90,3 +90,20 @@ func GetTransactionByHash(web *web3.Web3, txHash string) ( *web3cmn.Transaction,
 	}
 	return tx, err
 }
+
+func GetTransactionCount(web *web3.Web3, addr string, quantity string) (string, error) {
+	if web == nil {
+		return "", errors.New("GetTransactionCount has call error web is nil")
+	}
+
+	address := web3cmn.StringToAddress(addr)
+	if quantity == "" {
+		quantity = "pending"
+	}
+	count , err := web.Eth.GetTransactionCount(address, quantity)
+	if err != nil {
+		return "", err
+	}
+	result := fmt.Sprintf("0x%x", count.Uint64())
+	return result, err
+}

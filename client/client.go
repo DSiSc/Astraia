@@ -125,22 +125,6 @@ type reconnectFunc func(ctx context.Context) (ServerCodec, error)
 
 type clientContextKey struct{}
 
-//type clientConn struct {
-//	codec   ServerCodec
-//	handler *handler
-//}
-
-//func (c *Client) newClientConn(conn ServerCodec) *clientConn {
-//	ctx := context.WithValue(context.Background(), clientContextKey{}, c)
-//	handler := newHandler(ctx, conn, c.idgen, c.services)
-//	return &clientConn{conn, handler}
-//}
-
-//func (cc *clientConn) close(err error, inflightReq *requestOp) {
-//	cc.handler.close(err, inflightReq)
-//	cc.codec.Close()
-//}
-
 type readOp struct {
 	msgs  []*jsonrpcMessage
 	batch bool
@@ -253,6 +237,14 @@ func initClient(conn ServerCodec) *Client {
 		//go c.dispatch(conn)
 	}
 	return c
+}
+
+func (c *Client) setWeb3(web *web3.Web3) error {
+	if web == nil {
+		return errors.New("set web3 can't be nil")
+	}
+	c.web3 = web
+	return nil
 }
 
 // RegisterName creates a service for the given receiver type under the given name. When no
@@ -427,62 +419,6 @@ func (c *Client) Notify(ctx context.Context, method string, args ...interface{})
 	}
 }
 
-// EthSubscribe registers a subscripion under the "eth" namespace.
-//func (c *Client) EthSubscribe(ctx context.Context, channel interface{}, args ...interface{}) (*ClientSubscription, error) {
-//	return c.Subscribe(ctx, "eth", channel, args...)
-//}
-
-//// ShhSubscribe registers a subscripion under the "shh" namespace.
-//func (c *Client) ShhSubscribe(ctx context.Context, channel interface{}, args ...interface{}) (*ClientSubscription, error) {
-//	return c.Subscribe(ctx, "shh", channel, args...)
-//}
-
-// Subscribe calls the "<namespace>_subscribe" method with the given arguments,
-// registering a subscription. Server notifications for the subscription are
-// sent to the given channel. The element type of the channel must match the
-// expected type of content returned by the subscription.
-//
-// The context argument cancels the RPC request that sets up the subscription but has no
-// effect on the subscription after Subscribe has returned.
-//
-// Slow subscribers will be dropped eventually. Client buffers up to 8000 notifications
-// before considering the subscriber dead. The subscription Err channel will receive
-// ErrSubscriptionQueueOverflow. Use a sufficiently large buffer on the channel or ensure
-// that the channel usually has at least one reader to prevent this issue.
-//func (c *Client) Subscribe(ctx context.Context, namespace string, channel interface{}, args ...interface{}) (*ClientSubscription, error) {
-//	// Check type of channel first.
-//	chanVal := reflect.ValueOf(channel)
-//	if chanVal.Kind() != reflect.Chan || chanVal.Type().ChanDir()&reflect.SendDir == 0 {
-//		panic("first argument to Subscribe must be a writable channel")
-//	}
-//	if chanVal.IsNil() {
-//		panic("channel given to Subscribe must not be nil")
-//	}
-//	if c.isHTTP {
-//		return nil, ErrNotificationsUnsupported
-//	}
-//
-//	msg, err := c.newMessage(namespace+subscribeMethodSuffix, args...)
-//	if err != nil {
-//		return nil, err
-//	}
-//	op := &requestOp{
-//		ids:  []json.RawMessage{msg.ID},
-//		resp: make(chan *jsonrpcMessage),
-//		sub:  newClientSubscription(c, namespace, chanVal),
-//	}
-//
-//	// Send the subscription request.
-//	// The arrival and validity of the response is signaled on sub.quit.
-//	if err := c.send(ctx, op, msg); err != nil {
-//		return nil, err
-//	}
-//	if _, err := op.wait(ctx, c); err != nil {
-//		return nil, err
-//	}
-//	return op.sub, nil
-//}
-
 func (c *Client) newMessage(method string, paramsIn ...interface{}) (*jsonrpcMessage, error) {
 	msg := &jsonrpcMessage{Version: vsn, ID: c.nextID(), Method: method}
 	if paramsIn != nil { // prevent sending "params":null
@@ -514,6 +450,7 @@ func (c *Client) send(ctx context.Context, op *requestOp, msg interface{}) error
 func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessage) error {
 	result := []string{}
 	json.Unmarshal(msg.Params, &result)
+	jsonReusult := []byte{'{', '"', 'p', 'e', 'r', 's', 'o', 'n', 'a', 'l', '"', ':', '"', '1', '.', '0', '"', '}'}
 
 	switch msg.Method {
 	case "personal_newAccount":
@@ -537,6 +474,20 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 			fmt.Println("lockAccount failed, err = ", err)
 		}
 		break
+
+	case "eth_getTransactionCount":
+		addr := result[0]
+		quantity := result[1]
+
+		count, err := api.GetTransactionCount(c.web3, addr, quantity)
+		if err != nil {
+			fmt.Println("eth_getTransactionCount failed, err = ", err)
+			break
+		}
+		jsonReusult, _ = json.Marshal(count)
+
+		break
+		
 	case "eth_sendTransaction":
 		result := make([]Tx, 1)
 		err := json.Unmarshal(msg.Params, &result)
@@ -566,29 +517,44 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 			fmt.Println("eth_sendTransaction failed, err = ", err)
 			break
 		}
-		fmt.Println(hash.String())
+
+		jsonReusult, _ = json.Marshal(hash.String())
 
 		break
 
 	case "eth_sendRawTransaction":
-		fmt.Println("result: ", result[0])
 		hash, err := wutils.SendRawTransactionWeb3(c.web3, result[0])
 		if err != nil {
 			fmt.Println("sendRawTransaction failed, err = ", err)
 			break
 		}
-		fmt.Println(hash.String())
+		//fmt.Println(hash.String())
+		jsonReusult, _ = json.Marshal(hash.String())
 
 		break
-
 	case "eth_getTransactionByHash":
 		tx, err := api.GetTransactionByHash(c.web3, result[0])
 		if err != nil {
 			fmt.Println("eth_getTransactionByHash failed, err = ", err)
 			break
 		}
-		fmt.Println(tx.String())
 
+		jsonReusult, _ = json.Marshal(tx.String())
+		break
+
+	case "eth_newWeb3":
+		hostname := result[0]
+		port := result[1]
+		web, err := wutils.NewWeb3(hostname, port, false)
+		if err != nil {
+			fmt.Println("eth_newWeb3 failed, err = ", err)
+			break
+		}
+		c.setWeb3(web)
+		jsonReusult, _ = json.Marshal("new dial http:// " + hostname + ":" + port)
+		break
+
+		break
 	//TODO: verify legal(important)
 	case "personal_signTransaction":
 		var rawMsg []json.RawMessage
@@ -628,16 +594,18 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 			fmt.Println("personal_signTransaction rlp encode failed", "tx", result, "err", err)
 		}
 
-		fmt.Println("signcode = ", wcommon.ToHex(data))
+		jsonReusult, _ = json.Marshal(wcommon.ToHex(data))
+
+		break
 
 	default:
-		fmt.Println("default")
+		//jsonReusult, _ = json.Marshal("This function is not currently implemented")
 	}
 
 	respmsg := jsonrpcMessage{
 		Method:msg.Method,
 		Params:msg.Params,
-		Result:[]byte{'{', '"', 'p', 'e', 'r', 's', 'o', 'n', 'a', 'l', '"', ':', '"', '1', '.', '0', '"', '}'},
+		Result:jsonReusult,
 	}
 
 	op.resp <- &respmsg
@@ -651,6 +619,7 @@ func (c *Client) write(ctx context.Context, msg interface{}) error {
 			return err
 		}
 	}
+
 	err := c.writeConn.Write(ctx, msg)
 	if err != nil {
 		c.writeConn = nil
@@ -698,12 +667,10 @@ func TxToTransaction(tx Tx) (ctypes.Transaction, error){
 	from := common.HexToAddress(tx["from"])
 	to := common.HexToAddress(tx["to"])
 	gasPrice, _ := strconv.ParseInt(tx["gasPrice"], 0, 64)
-	gas, _ := strconv.ParseInt(tx["gas"], 0, 64)
+	//gas, _ := strconv.ParseInt(tx["gas"], 0, 64)
 	value, _ := strconv.ParseInt(tx["value"], 0, 64)
 	data := common.Hex2Bytes(tx["payload"])
 	gasLimit, _ := strconv.ParseInt(tx["gasLimit"], 0, 64)
-
-	fmt.Println(from, to, gasPrice, gas, value, data)
 
 	transaction := ctypes.Transaction{
 		Data:ctypes.TxData{
@@ -718,111 +685,3 @@ func TxToTransaction(tx Tx) (ctypes.Transaction, error){
 	}
 	return transaction, nil
 }
-
-// dispatch is the main loop of the client.
-// It sends read messages to waiting calls to Call and BatchCall
-// and subscription notifications to registered subscriptions.
-//func (c *Client) dispatch(codec ServerCodec) {
-//	var (
-//		lastOp      *requestOp  // tracks last send operation
-//		reqInitLock = c.reqInit // nil while the send lock is held
-//		conn        = c.newClientConn(codec)
-//		reading     = true
-//	)
-//	defer func() {
-//		close(c.closing)
-//		if reading {
-//			conn.close(ErrClientQuit, nil)
-//			c.drainRead()
-//		}
-//		close(c.didClose)
-//	}()
-//
-//	// Spawn the initial read loop.
-//	go c.read(codec)
-//
-//	for {
-//		select {
-//		case <-c.close:
-//			return
-//
-//		// Read path:
-//		case op := <-c.readOp:
-//			if op.batch {
-//				conn.handler.handleBatch(op.msgs)
-//			} else {
-//				conn.handler.handleMsg(op.msgs[0])
-//			}
-//
-//		case err := <-c.readErr:
-//			conn.handler.log.Debug("RPC connection read error err, " + err.Error())
-//			conn.close(err, lastOp)
-//			reading = false
-//
-//		// Reconnect:
-//		case newcodec := <-c.reconnected:
-//			log.Debug("RPC client reconnected", "reading", reading, "conn", newcodec.RemoteAddr())
-//			if reading {
-//				// Wait for the previous read loop to exit. This is a rare case which
-//				// happens if this loop isn't notified in time after the connection breaks.
-//				// In those cases the caller will notice first and reconnect. Closing the
-//				// handler terminates all waiting requests (closing op.resp) except for
-//				// lastOp, which will be transferred to the new handler.
-//				conn.close(errClientReconnected, lastOp)
-//				c.drainRead()
-//			}
-//			go c.read(newcodec)
-//			reading = true
-//			conn = c.newClientConn(newcodec)
-//			// Re-register the in-flight request on the new handler
-//			// because that's where it will be sent.
-//			conn.handler.addRequestOp(lastOp)
-//
-//		// Send path:
-//		case op := <-reqInitLock:
-//			// Stop listening for further requests until the current one has been sent.
-//			reqInitLock = nil
-//			lastOp = op
-//			conn.handler.addRequestOp(op)
-//
-//		case err := <-c.reqSent:
-//			if err != nil {
-//				// Remove response handlers for the last send. When the read loop
-//				// goes down, it will signal all other current operations.
-//				conn.handler.removeRequestOp(lastOp)
-//			}
-//			// Let the next request in.
-//			reqInitLock = c.reqInit
-//			lastOp = nil
-//
-//		case op := <-c.reqTimeout:
-//			conn.handler.removeRequestOp(op)
-//		}
-//	}
-//}
-
-// drainRead drops read messages until an error occurs.
-//func (c *Client) drainRead() {
-//	for {
-//		select {
-//		case <-c.readOp:
-//		case <-c.readErr:
-//			return
-//		}
-//	}
-//}
-
-// read decodes RPC messages from a codec, feeding them into dispatch.
-//func (c *Client) read(codec ServerCodec) {
-//	for {
-//		msgs, batch, err := codec.Read()
-//		if _, ok := err.(*json.SyntaxError); ok {
-//			codec.Write(context.Background(), errorMessage(&parseError{err.Error()}))
-//		}
-//		if err != nil {
-//			c.readErr <- err
-//			return
-//		}
-//		c.readOp <- readOp{msgs, batch}
-//	}
-//}

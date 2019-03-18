@@ -16,3 +16,4 @@ func TestExampleClientSubscription(t *testing.T) {
 	fmt.Println(err)
 	fmt.Println(result)
 }
+
