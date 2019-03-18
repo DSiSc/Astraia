@@ -33,7 +33,6 @@ var (
 
 )
 
-
 func init() {
 	app.Action = lightClient
 	app.HideVersion = true
@@ -42,8 +41,6 @@ func init() {
 	//fmt.Println(accountCmdType)
 	app.Commands = []cli.Command{
 		consoleCommand,
-		attachCommand,
-		javascriptCommand,
 	}
 	app.Commands = append(app.Commands, cmd.AccountCommand)
 	//app.Commands = append(app.Commands, consoleCommand)

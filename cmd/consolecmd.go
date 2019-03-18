@@ -20,11 +20,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DSiSc/lightClient/client"
+	"github.com/DSiSc/lightClient/config"
 	"github.com/DSiSc/lightClient/console"
 	"github.com/DSiSc/lightClient/utils"
-	wutils "github.com/DSiSc/wallet/utils"
 	"github.com/urfave/cli"
-	"path/filepath"
 	"strings"
 )
 
@@ -32,7 +31,7 @@ var (
 	consoleFlags = []cli.Flag{utils.JSpathFlag, utils.ExecFlag, utils.PreloadJSFlag}
 
 	consoleCommand = cli.Command{
-		Action:   utils.MigrateFlags(localConsole),
+		Action:   utils.MigrateFlags(remoteConsole),
 		Name:     "console",
 		Usage:    "Start an interactive JavaScript environment",
 		Flags:    append(append(append(nodeFlags, rpcFlags...), consoleFlags...), whisperFlags...),
@@ -43,31 +42,6 @@ which exposes a node admin interface as well as the Ðapp JavaScript API.
 See https://github.com/ethereum/go-ethereum/wiki/JavaScript-Console.`,
 	}
 
-	attachCommand = cli.Command{
-		Action:    utils.MigrateFlags(remoteConsole),
-		Name:      "attach",
-		Usage:     "Start an interactive JavaScript environment (connect to node)",
-		ArgsUsage: "[endpoint]",
-		Flags:     append(consoleFlags, wutils.DataDirFlag),
-		Category:  "CONSOLE COMMANDS",
-		Description: `
-The Geth console is an interactive shell for the JavaScript runtime environment
-which exposes a node admin interface as well as the Ðapp JavaScript API.
-See https://github.com/ethereum/go-ethereum/wiki/JavaScript-Console.
-This command allows to open a console on a running geth node.`,
-	}
-
-	javascriptCommand = cli.Command{
-		Action:    utils.MigrateFlags(ephemeralConsole),
-		Name:      "js",
-		Usage:     "Execute the specified JavaScript files",
-		ArgsUsage: "<jsfile> [jsfile...]",
-		Flags:     append(nodeFlags, consoleFlags...),
-		Category:  "CONSOLE COMMANDS",
-		Description: `
-The JavaScript VM exposes a node admin interface as well as the Ðapp
-JavaScript API. See https://github.com/ethereum/go-ethereum/wiki/JavaScript-Console`,
-	}
 )
 
 // localConsole starts a new geth node, attaching a JavaScript console to it at the
@@ -106,18 +80,21 @@ func remoteConsole(ctx *cli.Context) error {
 	endpoint := ctx.Args().First()
 	if endpoint == "" {
 		//path := node.DefaultDataDir()
-		path := ""
-		if ctx.GlobalIsSet(wutils.DataDirFlag.Name) {
-			path = ctx.GlobalString(wutils.DataDirFlag.Name)
-		}
-		if path != "" {
-			if ctx.GlobalBool(utils.TestnetFlag.Name) {
-				path = filepath.Join(path, "testnet")
-			} else if ctx.GlobalBool(utils.RinkebyFlag.Name) {
-				path = filepath.Join(path, "rinkeby")
-			}
-		}
-		endpoint = fmt.Sprintf("%s/geth.ipc", path)
+		//path := ""
+		//if ctx.GlobalIsSet(wutils.DataDirFlag.Name) {
+		//	path = ctx.GlobalString(wutils.DataDirFlag.Name)
+		//}
+		//if path != "" {
+		//	if ctx.GlobalBool(utils.TestnetFlag.Name) {
+		//		path = filepath.Join(path, "testnet")
+		//	} else if ctx.GlobalBool(utils.RinkebyFlag.Name) {
+		//		path = filepath.Join(path, "rinkeby")
+		//	}
+		//}
+		//endpoint = fmt.Sprintf("%s/geth.ipc", path)
+		hostname := config.GetApiGatewayHostName()
+		port := config.GetApiGatewayPort()
+		endpoint = fmt.Sprintf("http://%s:/%s", hostname, port)
 	}
 	client, err := dialRPC(endpoint)
 	if err != nil {
