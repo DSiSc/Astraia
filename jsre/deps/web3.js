@@ -5354,7 +5354,7 @@ var methods = function () {
         name: 'getTransactionCount',
         call: 'eth_getTransactionCount',
         params: 2,
-        inputFormatter: [null, formatters.inputDefaultBlockNumberFormatter],
+        inputFormatter: [formatters.inputAddressFormatter, null],
         outputFormatter: utils.toDecimal
     });
 
@@ -5431,6 +5431,12 @@ var methods = function () {
         params: 0
     });
 
+    var newWeb3 = new Method({
+        name: 'newWeb3',
+        call: 'eth_newWeb3',
+        params: 2
+    });
+
     return [
         getBalance,
         getStorageAt,
@@ -5454,7 +5460,8 @@ var methods = function () {
         compileLLL,
         compileSerpent,
         submitWork,
-        getWork
+        getWork,
+        newWeb3
     ];
 };
 
