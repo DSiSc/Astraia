@@ -5241,113 +5241,36 @@ function Eth(web3) {
         p.setRequestManager(self._requestManager);
     });
 
-
-    this.iban = Iban;
-    this.sendIBANTransaction = transfer.bind(null, this);
+    // this.iban = Iban;
+    // this.sendIBANTransaction = transfer.bind(null, this);
 }
 
-Object.defineProperty(Eth.prototype, 'defaultBlock', {
-    get: function () {
-        return c.defaultBlock;
-    },
-    set: function (val) {
-        c.defaultBlock = val;
-        return val;
-    }
-});
-
-Object.defineProperty(Eth.prototype, 'defaultAccount', {
-    get: function () {
-        return c.defaultAccount;
-    },
-    set: function (val) {
-        c.defaultAccount = val;
-        return val;
-    }
-});
+// Object.defineProperty(Eth.prototype, 'defaultBlock', {
+//     get: function () {
+//         return c.defaultBlock;
+//     },
+//     set: function (val) {
+//         c.defaultBlock = val;
+//         return val;
+//     }
+// });
+//
+// Object.defineProperty(Eth.prototype, 'defaultAccount', {
+//     get: function () {
+//         return c.defaultAccount;
+//     },
+//     set: function (val) {
+//         c.defaultAccount = val;
+//         return val;
+//     }
+// });
 
 var methods = function () {
-    var getBalance = new Method({
-        name: 'getBalance',
-        call: 'eth_getBalance',
-        params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter],
-        outputFormatter: formatters.outputBigNumberFormatter
-    });
-
-    var getStorageAt = new Method({
-        name: 'getStorageAt',
-        call: 'eth_getStorageAt',
-        params: 3,
-        inputFormatter: [null, utils.toHex, formatters.inputDefaultBlockNumberFormatter]
-    });
-
-    var getCode = new Method({
-        name: 'getCode',
-        call: 'eth_getCode',
-        params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
-    });
-
-    var getBlock = new Method({
-        name: 'getBlock',
-        call: blockCall,
-        params: 2,
-        inputFormatter: [formatters.inputBlockNumberFormatter, function (val) { return !!val; }],
-        outputFormatter: formatters.outputBlockFormatter
-    });
-
-    var getUncle = new Method({
-        name: 'getUncle',
-        call: uncleCall,
-        params: 2,
-        inputFormatter: [formatters.inputBlockNumberFormatter, utils.toHex],
-        outputFormatter: formatters.outputBlockFormatter,
-
-    });
-
-    var getCompilers = new Method({
-        name: 'getCompilers',
-        call: 'eth_getCompilers',
-        params: 0
-    });
-
-    var getBlockTransactionCount = new Method({
-        name: 'getBlockTransactionCount',
-        call: getBlockTransactionCountCall,
-        params: 1,
-        inputFormatter: [formatters.inputBlockNumberFormatter],
-        outputFormatter: utils.toDecimal
-    });
-
-    var getBlockUncleCount = new Method({
-        name: 'getBlockUncleCount',
-        call: uncleCountCall,
-        params: 1,
-        inputFormatter: [formatters.inputBlockNumberFormatter],
-        outputFormatter: utils.toDecimal
-    });
-
     var getTransaction = new Method({
         name: 'getTransaction',
         call: 'eth_getTransactionByHash',
         params: 1,
         outputFormatter: formatters.outputTransactionFormatter
-    });
-
-    var getTransactionFromBlock = new Method({
-        name: 'getTransactionFromBlock',
-        call: transactionFromBlockCall,
-        params: 2,
-        inputFormatter: [formatters.inputBlockNumberFormatter, utils.toHex],
-        outputFormatter: formatters.outputTransactionFormatter
-    });
-
-    var getTransactionReceipt = new Method({
-        name: 'getTransactionReceipt',
-        call: 'eth_getTransactionReceipt',
-        params: 1,
-        outputFormatter: formatters.outputTransactionReceiptFormatter
     });
 
     var getTransactionCount = new Method({
@@ -5365,13 +5288,6 @@ var methods = function () {
         inputFormatter: [null]
     });
 
-    var sendTransaction = new Method({
-        name: 'sendTransaction',
-        call: 'eth_sendTransaction',
-        params: 1,
-        inputFormatter: [formatters.inputTransactionFormatter]
-    });
-
     var signTransaction = new Method({
         name: 'signTransaction',
         call: 'eth_signTransaction',
@@ -5379,56 +5295,10 @@ var methods = function () {
         inputFormatter: [formatters.inputTransactionFormatter]
     });
 
-    var sign = new Method({
-        name: 'sign',
-        call: 'eth_sign',
-        params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, null]
-    });
-
-    var call = new Method({
-        name: 'call',
-        call: 'eth_call',
-        params: 2,
-        inputFormatter: [formatters.inputCallFormatter, formatters.inputDefaultBlockNumberFormatter]
-    });
-
-    var estimateGas = new Method({
-        name: 'estimateGas',
-        call: 'eth_estimateGas',
-        params: 1,
-        inputFormatter: [formatters.inputCallFormatter],
-        outputFormatter: utils.toDecimal
-    });
-
     var compileSolidity = new Method({
         name: 'compile.solidity',
         call: 'eth_compileSolidity',
         params: 1
-    });
-
-    var compileLLL = new Method({
-        name: 'compile.lll',
-        call: 'eth_compileLLL',
-        params: 1
-    });
-
-    var compileSerpent = new Method({
-        name: 'compile.serpent',
-        call: 'eth_compileSerpent',
-        params: 1
-    });
-
-    var submitWork = new Method({
-        name: 'submitWork',
-        call: 'eth_submitWork',
-        params: 3
-    });
-
-    var getWork = new Method({
-        name: 'getWork',
-        call: 'eth_getWork',
-        params: 0
     });
 
     var newWeb3 = new Method({
@@ -5438,29 +5308,11 @@ var methods = function () {
     });
 
     return [
-        getBalance,
-        getStorageAt,
-        getCode,
-        getBlock,
-        getUncle,
-        getCompilers,
-        getBlockTransactionCount,
-        getBlockUncleCount,
         getTransaction,
-        getTransactionFromBlock,
-        getTransactionReceipt,
         getTransactionCount,
-        call,
-        estimateGas,
         sendRawTransaction,
         signTransaction,
-        sendTransaction,
-        sign,
         compileSolidity,
-        compileLLL,
-        compileSerpent,
-        submitWork,
-        getWork,
         newWeb3
     ];
 };
@@ -5582,6 +5434,13 @@ var methods = function () {
         inputFormatter: [null]
     });
 
+    var listAccounts = new Method({
+      name: 'listAccounts',
+      call: 'personal_listAccounts',
+      params: 1,
+      inputFormatter: [null]
+    });
+
     var signTransaction = new Method({
       name: 'signTransaction',
       call: 'personal_signTransaction',
@@ -5619,6 +5478,7 @@ var methods = function () {
 
     return [
         newAccount,
+        listAccounts,
         unlockAccount,
         signTransaction,
         sendTransaction,
@@ -5629,10 +5489,7 @@ var methods = function () {
 
 var properties = function () {
     return [
-        new Property({
-            name: 'listAccounts',
-            getter: 'personal_listAccounts'
-        })
+
     ];
 };
 

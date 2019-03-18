@@ -457,21 +457,24 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		wutils.NewAccount("", result[0])
 		break
 	case "personal_listAccounts":
-		wutils.ListAccounts("")
+		keystoreDir := result[0]
+		wutils.ListAccounts(keystoreDir)
 		break
 	case "personal_unlockAccount":
 		addr := result[0]
 		password := result[1]
 		err := wutils.Unlock(c.keystore, addr, password)
 		if err != nil {
-			fmt.Println("unlockAccount failed, err = ", err)
+			msg := fmt.Sprintf("unlockAccount failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 		}
 		break
 	case "personal_lockAccount":
 		addr := result[0]
 		err := wutils.Lock(c.keystore, addr)
 		if err != nil {
-			fmt.Println("lockAccount failed, err = ", err)
+			msg := fmt.Sprintf("lockAccount failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 		}
 		break
 
@@ -481,7 +484,8 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 
 		count, err := api.GetTransactionCount(c.web3, addr, quantity)
 		if err != nil {
-			fmt.Println("eth_getTransactionCount failed, err = ", err)
+			msg := fmt.Sprintf("eth_getTransactionCount failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 		jsonReusult, _ = json.Marshal(count)
@@ -492,7 +496,8 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		result := make([]Tx, 1)
 		err := json.Unmarshal(msg.Params, &result)
 		if err != nil {
-			fmt.Println("eth_sendTransaction, err = ", err)
+			msg := fmt.Sprintf("eth_sendTransaction, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 
@@ -514,7 +519,9 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 
 		hash, err := wutils.SendTransactionWeb3(req)
 		if err != nil {
-			fmt.Println("eth_sendTransaction failed, err = ", err)
+			msg := fmt.Sprintf("eth_sendTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+
 			break
 		}
 
@@ -525,7 +532,8 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 	case "eth_sendRawTransaction":
 		hash, err := wutils.SendRawTransactionWeb3(c.web3, result[0])
 		if err != nil {
-			fmt.Println("sendRawTransaction failed, err = ", err)
+			msg := fmt.Sprintf("sendRawTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 		//fmt.Println(hash.String())
@@ -535,7 +543,8 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 	case "eth_getTransactionByHash":
 		tx, err := api.GetTransactionByHash(c.web3, result[0])
 		if err != nil {
-			fmt.Println("eth_getTransactionByHash failed, err = ", err)
+			msg := fmt.Sprintf("eth_getTransactionByHash failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 
@@ -547,7 +556,8 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		port := result[1]
 		web, err := wutils.NewWeb3(hostname, port, false)
 		if err != nil {
-			fmt.Println("eth_newWeb3 failed, err = ", err)
+			msg := fmt.Sprintf("eth_newWeb3 failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 		c.setWeb3(web)
@@ -560,38 +570,44 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		var rawMsg []json.RawMessage
 		err := json.Unmarshal(msg.Params, &rawMsg)
 		if err != nil {
-			fmt.Println("personal_signTransaction failed, err = ", err)
+			msg := fmt.Sprintf("personal_signTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 
 		var result Tx
 		err = json.Unmarshal(rawMsg[0], &result)
 		if err != nil {
-			fmt.Println("personal_signTransaction, err = ", err)
+			msg := fmt.Sprintf("personal_signTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 
 		var password string
 		err = json.Unmarshal(rawMsg[1], &password)
 		if err != nil {
-			fmt.Println("personal_signTransaction, err = ", err)
+			msg := fmt.Sprintf("personal_signTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 
 		var transaction ctypes.Transaction
 		transaction, err = TxToTransaction(result)
 		if err != nil {
-			fmt.Println("personal_signTransaction, err = ", err)
+			msg := fmt.Sprintf("personal_signTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 		signed, err := wutils.SignTxByPassWord(&transaction, password)
 		if err != nil {
-			fmt.Println("personal_signTransaction sign failed", "tx", result, "err", err)
+			msg := fmt.Sprintf("personal_signTransaction failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
 		data, err := rlp.EncodeToBytes(signed)
 		if err != nil {
-			fmt.Println("personal_signTransaction rlp encode failed", "tx", result, "err", err)
+			msg := fmt.Sprintf("personal_signTransaction rlp encode failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
 		}
 
 		jsonReusult, _ = json.Marshal(wcommon.ToHex(data))
