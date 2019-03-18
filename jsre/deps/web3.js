@@ -5631,30 +5631,11 @@ var methods = function () {
         inputFormatter: [null]
     });
 
-    var importRawKey = new Method({
-        name: 'importRawKey',
-		call: 'personal_importRawKey',
-		params: 2
-    });
-
-    var sign = new Method({
-        name: 'sign',
-		call: 'personal_sign',
-		params: 3,
-		inputFormatter: [null, formatters.inputAddressFormatter, null]
-    });
-
     var signTransaction = new Method({
       name: 'signTransaction',
       call: 'personal_signTransaction',
       params: 2,
       inputFormatter: [formatters.inputTransactionFormatter, null]
-    });
-
-    var ecRecover = new Method({
-        name: 'ecRecover',
-		call: 'personal_ecRecover',
-		params: 2
     });
 
     var unlockAccount = new Method({
@@ -5687,10 +5668,7 @@ var methods = function () {
 
     return [
         newAccount,
-        importRawKey,
         unlockAccount,
-        ecRecover,
-        sign,
         signTransaction,
         sendTransaction,
         sendRawTransaction,
