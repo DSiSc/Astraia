@@ -83,44 +83,6 @@ func (b *bridge) NewAccount(call otto.FunctionCall) (response otto.Value) {
 	return ret
 }
 
-// OpenWallet is a wrapper around personal.openWallet which can interpret and
-// react to certain error messages, such as the Trezor PIN matrix request.
-//func (b *bridge) OpenWallet(call otto.FunctionCall) (response otto.Value) {
-//	// Make sure we have a wallet specified to open
-//	if !call.Argument(0).IsString() {
-//		throwJSException("first argument must be the wallet URL to open")
-//	}
-//	wallet := call.Argument(0)
-//
-//	var passwd otto.Value
-//	if call.Argument(1).IsUndefined() || call.Argument(1).IsNull() {
-//		passwd, _ = otto.ToValue("")
-//	} else {
-//		passwd = call.Argument(1)
-//	}
-//	// Open the wallet and return if successful in itself
-//	val, err := call.Otto.Call("jeth.openWallet", nil, wallet, passwd)
-//	if err == nil {
-//		return val
-//	}
-//	// Wallet open failed, report error unless it's a PIN entry
-//	if strings.HasSuffix(err.Error(), usbwallet.ErrTrezorPINNeeded.Error()) {
-//		val, err = b.readPinAndReopenWallet(call)
-//		if err == nil {
-//			return val
-//		}
-//	}
-//	// Check if the user needs to input a passphrase
-//	if !strings.HasSuffix(err.Error(), usbwallet.ErrTrezorPassphraseNeeded.Error()) {
-//		throwJSException(err.Error())
-//	}
-//	val, err = b.readPassphraseAndReopenWallet(call)
-//	if err != nil {
-//		throwJSException(err.Error())
-//	}
-//	return val
-//}
-
 func (b *bridge) readPassphraseAndReopenWallet(call otto.FunctionCall) (otto.Value, error) {
 	var passwd otto.Value
 	wallet := call.Argument(0)

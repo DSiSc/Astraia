@@ -107,3 +107,21 @@ func GetTransactionCount(web *web3.Web3, addr string, quantity string) (string, 
 	result := fmt.Sprintf("0x%x", count.Uint64())
 	return result, err
 }
+
+func GetBalance(web *web3.Web3, addr string, quantity string) (string, error){
+	if web == nil {
+		return "", errors.New("GetBalance has call error web is nil")
+	}
+
+	address := web3cmn.StringToAddress(addr)
+	if quantity == "" {
+		quantity = "latest"
+	}
+
+	count , err := web.Eth.GetBalance(address, quantity)
+	if err != nil {
+		return "", err
+	}
+	result := fmt.Sprintf("0x%x", count.Uint64())
+	return result, err
+}
