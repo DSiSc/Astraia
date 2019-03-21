@@ -5266,6 +5266,14 @@ function Eth(web3) {
 // });
 
 var methods = function () {
+    var getBalance = new Method({
+      name: 'getBalance',
+      call: 'eth_getBalance',
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, null],
+      outputFormatter: utils.toDecimal
+    });
+
     var getTransaction = new Method({
         name: 'getTransaction',
         call: 'eth_getTransactionByHash',
@@ -5288,13 +5296,6 @@ var methods = function () {
         inputFormatter: [null]
     });
 
-    var signTransaction = new Method({
-        name: 'signTransaction',
-        call: 'eth_signTransaction',
-        params: 1,
-        inputFormatter: [formatters.inputTransactionFormatter]
-    });
-
     var compileSolidity = new Method({
         name: 'compile.solidity',
         call: 'eth_compileSolidity',
@@ -5308,10 +5309,10 @@ var methods = function () {
     });
 
     return [
+        getBalance,
         getTransaction,
         getTransactionCount,
         sendRawTransaction,
-        signTransaction,
         compileSolidity,
         newWeb3
     ];
@@ -5455,13 +5456,6 @@ var methods = function () {
         inputFormatter: [formatters.inputAddressFormatter, null, null]
     });
 
-    var sendTransaction = new Method({
-        name: 'sendTransaction',
-        call: 'personal_sendTransaction',
-        params: 2,
-        inputFormatter: [formatters.inputTransactionFormatter, null]
-    });
-
     var lockAccount = new Method({
         name: 'lockAccount',
         call: 'personal_lockAccount',
@@ -5469,20 +5463,11 @@ var methods = function () {
         inputFormatter: [formatters.inputAddressFormatter]
     });
 
-    var sendRawTransaction = new Method({
-      name: 'sendRawTransaction',
-      call: 'personal_sendRawTransaction',
-      params: 1,
-      inputFormatter: [null]
-    });
-
     return [
         newAccount,
         listAccounts,
         unlockAccount,
         signTransaction,
-        sendTransaction,
-        sendRawTransaction,
         lockAccount,
     ];
 };

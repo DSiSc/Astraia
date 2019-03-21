@@ -77,13 +77,19 @@ func localConsole(ctx *cli.Context) error {
 // console to it.
 func remoteConsole(ctx *cli.Context) error {
 	// Attach to a remotely running geth instance and start the JavaScript console
-	endpoint := ctx.Args().First()
-	if endpoint == "" {
-		//read config file
-		hostname := config.GetApiGatewayHostName()
-		port := config.GetApiGatewayPort()
-		endpoint = fmt.Sprintf("http://%s:/%s", hostname, port)
-	}
+	//endpoint := ctx.Args().First()
+	//if endpoint == "" {
+	//	//read config file
+	//	hostname := config.GetApiGatewayHostName()
+	//	port := config.GetApiGatewayPort()
+	//	endpoint = fmt.Sprintf("http://%s:/%s", hostname, port)
+	//}
+
+	//read config file
+	hostname := config.GetApiGatewayHostName()
+	port := config.GetApiGatewayPort()
+	endpoint := fmt.Sprintf("http://%s:/%s", hostname, port)
+
 	client, err := dialRPC(endpoint)
 	if err != nil {
 		utils.Fatalf("Unable to attach to remote geth: %v", err)
