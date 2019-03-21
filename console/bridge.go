@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DSiSc/craft/log"
-	"github.com/DSiSc/lightClient/client"
+	"github.com/DSiSc/astraia/client"
 	"io"
 	"strings"
 	"time"

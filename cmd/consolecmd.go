@@ -19,10 +19,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/DSiSc/lightClient/client"
-	"github.com/DSiSc/lightClient/config"
-	"github.com/DSiSc/lightClient/console"
-	"github.com/DSiSc/lightClient/utils"
+	"github.com/DSiSc/astraia/client"
+	"github.com/DSiSc/astraia/config"
+	"github.com/DSiSc/astraia/console"
+	"github.com/DSiSc/astraia/utils"
 	"github.com/urfave/cli"
 	"strings"
 )

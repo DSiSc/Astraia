@@ -7,7 +7,7 @@ jobs:
 
     docker:
       - image: circleci/golang:1.10.3
-    working_directory: /go/src/github.com/DSiSc/lightClient
+    working_directory: /go/src/github.com/DSiSc/astraia
 
     steps:
       - checkout

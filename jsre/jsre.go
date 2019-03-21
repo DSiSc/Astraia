@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"github.com/DSiSc/crypto-suite/common"
-	"github.com/DSiSc/lightClient/jsre/deps"
+	"github.com/DSiSc/astraia/jsre/deps"
 	"github.com/robertkrimen/otto"
 )
 
