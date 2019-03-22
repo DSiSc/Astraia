@@ -482,7 +482,7 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		addr := result[0]
 		quantity := result[1]
 
-		count, err := api.GetTransactionCount(c.web3, addr, quantity)
+		count, err := api.GetBalance(c.web3, addr, quantity)
 		if err != nil {
 			msg := fmt.Sprintf("eth_getBalance failed, err = %v", err)
 			jsonReusult, _ = json.Marshal(msg)
@@ -561,7 +561,6 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
-
 		jsonReusult, _ = json.Marshal(tx.String())
 		break
 
