@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/DSiSc/craft/types"
-	"github.com/DSiSc/lightClient/config"
+	"github.com/DSiSc/astraia/config"
 	"github.com/DSiSc/wallet/common"
 	local "github.com/DSiSc/wallet/core/types"
 	web3cmn "github.com/DSiSc/web3go/common"

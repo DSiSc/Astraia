@@ -18,9 +18,9 @@ package console
 
 import (
 	"fmt"
-	"github.com/DSiSc/lightClient/client"
-	"github.com/DSiSc/lightClient/jsre"
-	"github.com/DSiSc/lightClient/web3ext"
+	"github.com/DSiSc/astraia/client"
+	"github.com/DSiSc/astraia/jsre"
+	"github.com/DSiSc/astraia/web3ext"
 	"github.com/mattn/go-colorable"
 	"io"
 	"io/ioutil"
@@ -276,7 +276,7 @@ func (c *Console) AutoCompleteInput(line string, pos int) (string, []string, str
 // console's available modules.
 func (c *Console) Welcome() {
 	// Print some generic Geth metadata
-	fmt.Fprintf(c.printer, "Welcome to the lightClient JavaScript console!\n\n")
+	fmt.Fprintf(c.printer, "Welcome to the astraia JavaScript console!\n\n")
 	c.jsre.Run(`
 		console.log("instance: " + web3.version.node);
 		console.log("coinbase: " + eth.coinbase);

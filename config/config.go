@@ -33,11 +33,11 @@ func LoadConfig() (config *viper.Viper) {
 
 	config.SetConfigName("light_client")
 	homePath, _ := Home()
-	config.AddConfigPath(fmt.Sprintf("%s/.lightClient", homePath))
+	config.AddConfigPath(fmt.Sprintf("%s/.astraia", homePath))
 	// Path to look for the config file in based on GOPATH
 	goPath := os.Getenv("GOPATH")
 	for _, p := range filepath.SplitList(goPath) {
-		config.AddConfigPath(filepath.Join(p, "src/github.com/DSiSc/lightClient/config"))
+		config.AddConfigPath(filepath.Join(p, "src/github.com/DSiSc/astraia/config"))
 	}
 
 	err := config.ReadInConfig()

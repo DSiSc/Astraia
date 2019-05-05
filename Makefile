@@ -22,7 +22,7 @@ BUILD_DATE=$(shell date '+%Y-%m-%d-%H:%M:%S')
 default: all
 
 help:
-	@echo 'Management commands for walterkangluo/lightClient:'
+	@echo 'Management commands for walterkangluo/astraia:'
 	@echo
 	@echo 'Usage:'
 	@echo '    make lint            Check code style.'
@@ -54,9 +54,9 @@ lint:
 static-check: fmt spelling lint
 
 build:
-	@echo "building lightClient ${VERSION}"
+	@echo "building astraia ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
-	go build -v -ldflags "-X github.com/walterkangluo/lightClient/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/walterkangluo/lightClient/version.BuildDate=${BUILD_DATE}" ./...
+	go build -v -ldflags "-X github.com/walterkangluo/astraia/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/walterkangluo/astraia/version.BuildDate=${BUILD_DATE}" -o build/astraia cmd/main.go cmd/consolecmd.go
 
 vet:
 	@echo "Examine source code and reports suspicious constructs..."

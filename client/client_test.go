@@ -3,7 +3,7 @@ package rpc_test
 import (
 	"context"
 	"fmt"
-	"github.com/DSiSc/lightClient/client"
+	"github.com/DSiSc/astraia/client"
 	"github.com/cespare/cp"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"

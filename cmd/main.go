@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	local "github.com/DSiSc/lightClient/utils"
+	local "github.com/DSiSc/astraia/utils"
 	"github.com/DSiSc/wallet/cmd"
 	"github.com/DSiSc/wallet/utils"
 	"github.com/urfave/cli"
@@ -34,7 +34,7 @@ var (
 )
 
 func init() {
-	app.Action = lightClient
+	app.Action = astraia
 	app.HideVersion = true
 	app.Copyright = "Copyright 2018-2023 The justitia Authors"
 
@@ -62,9 +62,9 @@ func main() {
 	}
 }
 
-func lightClient(ctx *cli.Context) error {
+func astraia(ctx *cli.Context) error {
 	fmt.Println("***Usage")
-	fmt.Println("***lightClient account new/update/import/list --datadir --keystore")
+	fmt.Println("***astraia account new/update/import/list --datadir --keystore")
 	return nil
 }
 
