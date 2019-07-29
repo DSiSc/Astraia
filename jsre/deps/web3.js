@@ -5449,6 +5449,20 @@ var methods = function () {
       inputFormatter: [formatters.inputTransactionFormatter, null]
     });
 
+    var signCrossTransaction = new Method({
+      name: 'signCrossTransaction',
+      call: 'personal_signCrossTransaction',
+      params: 4,
+      inputFormatter: [formatters.inputTransactionFormatter, formatters.inputAddressFormatter, null, null]
+    });
+
+    var signCrossQueryTransaction = new Method({
+      name: 'signCrossQueryTransaction',
+      call: 'personal_signCrossQueryTransaction',
+      params: 4,
+      inputFormatter: [formatters.inputTransactionFormatter, formatters.inputAddressFormatter, null, null]
+    });
+
     var unlockAccount = new Method({
         name: 'unlockAccount',
         call: 'personal_unlockAccount',
@@ -5468,6 +5482,8 @@ var methods = function () {
         listAccounts,
         unlockAccount,
         signTransaction,
+        signCrossTransaction,
+        signCrossQueryTransaction,
         lockAccount,
     ];
 };

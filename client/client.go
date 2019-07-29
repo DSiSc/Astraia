@@ -17,28 +17,33 @@
 package rpc
 
 import (
+	"time"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/DSiSc/crypto-suite/rlp"
-	"github.com/DSiSc/astraia/api"
-	"github.com/DSiSc/astraia/config"
-	"github.com/DSiSc/p2p/common"
-	wcommon "github.com/DSiSc/wallet/common"
 	"math/big"
 	"net/url"
 	"strconv"
 	"sync/atomic"
-	"time"
 
+	"github.com/DSiSc/crypto-suite/rlp"
+	"github.com/DSiSc/astraia/api"
+	"github.com/DSiSc/astraia/config"
+	"github.com/DSiSc/p2p/common"
+	"github.com/DSiSc/web3go/web3"
 	"github.com/DSiSc/craft/log"
+
 	ctypes "github.com/DSiSc/craft/types"
 	"github.com/DSiSc/wallet/accounts/keystore"
 	wutils "github.com/DSiSc/wallet/utils"
 	web3cmn "github.com/DSiSc/web3go/common"
-	"github.com/DSiSc/web3go/web3"
+	eutil "github.com/DSiSc/evm-NG/system/contract/util"
+	wcommon "github.com/DSiSc/wallet/common"
+	sutil "github.com/DSiSc/statedb-NG/util"
+
+
 )
 
 var (
@@ -577,7 +582,186 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		jsonReusult, _ = json.Marshal("new dial http:// " + hostname + ":" + port)
 		break
 
+	case "personal_signCrossTransaction":
+		var rawMsg []json.RawMessage
+		err := json.Unmarshal(msg.Params, &rawMsg)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		//params: tx, target addr, chainFlag, password
+		var result Tx
+		err = json.Unmarshal(rawMsg[0], &result)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		var toAddr string
+		err = json.Unmarshal(rawMsg[1], &toAddr)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+		targetAddr := sutil.HexToAddress(toAddr)
+
+		var chainFlag string
+		err = json.Unmarshal(rawMsg[2], &chainFlag)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		var password string
+		err = json.Unmarshal(rawMsg[3], &password)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		var transaction ctypes.Transaction
+		transaction, err = TxToTransaction(result)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		// inject payload(tx's byte code)
+		subTx := GetCrossSubTx(transaction)
+		signed, err := wutils.SignTxByPassWord(&subTx, password)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+		data, err := rlp.EncodeToBytes(signed)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction rlp encode failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+		}
+
+		//construct a input with some contract call args
+		argTo := targetAddr
+		argPayload := web3cmn.BytesToHex(data)
+		argChainFlag := chainFlag
+		payload_, err := eutil.EncodeReturnValue(argTo, argPayload, argChainFlag)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction subTx failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+		input := web3cmn.BytesToHex(payload_)
+		funcFilter := "0x68d4a18e"
+		inputStr := funcFilter + input[2:]
+		inputBytes := web3cmn.HexToBytes(inputStr)
+		transaction.Data.Payload = inputBytes
+
+		signed, err = wutils.SignTxByPassWord(&transaction, password)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+		data, err = rlp.EncodeToBytes(signed)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossTransaction rlp encode failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+		}
+
+		jsonReusult, _ = json.Marshal(wcommon.ToHex(data))
+
 		break
+
+	case "personal_signCrossQueryTransaction":
+		var rawMsg []json.RawMessage
+		err := json.Unmarshal(msg.Params, &rawMsg)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		//params: tx, sender addr, chainFlag, password
+		var result Tx
+		err = json.Unmarshal(rawMsg[0], &result)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		var fromAddr string
+		err = json.Unmarshal(rawMsg[1], &fromAddr)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+		senderAddr := sutil.HexToAddress(fromAddr)
+
+		var chainFlag string
+		err = json.Unmarshal(rawMsg[2], &chainFlag)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		var password string
+		err = json.Unmarshal(rawMsg[3], &password)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		var transaction ctypes.Transaction
+		transaction, err = TxToTransaction(result)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, err = %v", err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+
+		//construct a input with some contract call args
+		argSender := senderAddr
+		argChainFlag := chainFlag
+		payload_, err := eutil.EncodeReturnValue(argSender, argChainFlag)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+		input := web3cmn.BytesToHex(payload_)
+		funcFilter := "0x15508866"
+		inputStr := funcFilter + input[2:]
+		inputBytes := web3cmn.HexToBytes(inputStr)
+		fmt.Println("<------->", string(inputStr))
+		transaction.Data.Payload = inputBytes
+
+		signed, err := wutils.SignTxByPassWord(&transaction, password)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+			break
+		}
+		data, err := rlp.EncodeToBytes(signed)
+		if err != nil {
+			msg := fmt.Sprintf("personal_signCrossQueryTransaction rlp encode failed, tx = %s, err = %v", result, err)
+			jsonReusult, _ = json.Marshal(msg)
+		}
+
+		jsonReusult, _ = json.Marshal(wcommon.ToHex(data))
+
+		break
+
 	//TODO: verify legal(important)
 	case "personal_signTransaction":
 		var rawMsg []json.RawMessage
@@ -611,6 +795,7 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 			jsonReusult, _ = json.Marshal(msg)
 			break
 		}
+
 		signed, err := wutils.SignTxByPassWord(&transaction, password)
 		if err != nil {
 			msg := fmt.Sprintf("personal_signTransaction failed, tx = %s, err = %v", result, err)
@@ -698,7 +883,8 @@ func TxToTransaction(tx Tx) (ctypes.Transaction, error){
 	gasPrice, _ := strconv.ParseInt(tx["gasPrice"], 0, 64)
 	//gas, _ := strconv.ParseInt(tx["gas"], 0, 64)
 	value, _ := strconv.ParseInt(tx["value"], 0, 64)
-	data := common.Hex2Bytes(tx["payload"])
+	data := web3cmn.HexToBytes(tx["input"])
+
 	gasLimit, _ := strconv.ParseInt(tx["gasLimit"], 0, 64)
 
 	transaction := ctypes.Transaction{
@@ -713,4 +899,17 @@ func TxToTransaction(tx Tx) (ctypes.Transaction, error){
 		},
 	}
 	return transaction, nil
+}
+
+func GetCrossSubTx(tx ctypes.Transaction) (ctypes.Transaction) {
+	//personal.signTransaction({from:'0x9f026b8fec907c3747ecd8f167e41e724def98b1' , to: '0x47c5e40890bce4a473a49d7501808b9633f29782', value:1000, gas:"0", gasPrice:"0", nonce:"1",input:""}, "123")
+	var subTx ctypes.Transaction
+	subTx.Data.From = tx.Data.From
+	subTx.Data.Recipient = tx.Data.Recipient
+	subTx.Data.Amount = tx.Data.Amount
+	subTx.Data.GasLimit = tx.Data.GasLimit
+	subTx.Data.Price = subTx.Data.Price
+	subTx.Data.AccountNonce = subTx.Data.AccountNonce + 1
+
+	return subTx
 }
