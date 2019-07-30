@@ -634,7 +634,7 @@ func (c *Client) sendLocal(ctx context.Context, op *requestOp, msg *jsonrpcMessa
 		}
 
 		// inject payload(tx's byte code)
-		subTx := GetCrossSubTx(transaction)
+		subTx := GetCrossSubTx(transaction, toAddr)
 		signed, err := wutils.SignTxByPassWord(&subTx, password)
 		if err != nil {
 			msg := fmt.Sprintf("personal_signCrossTransaction failed, tx = %s, err = %v", result, err)
@@ -901,7 +901,7 @@ func TxToTransaction(tx Tx) (ctypes.Transaction, error){
 	return transaction, nil
 }
 
-func GetCrossSubTx(tx ctypes.Transaction) (ctypes.Transaction) {
+func GetCrossSubTx(tx ctypes.Transaction, toAddr string) (ctypes.Transaction) {
 	//personal.signTransaction({from:'0x9f026b8fec907c3747ecd8f167e41e724def98b1' , to: '0x47c5e40890bce4a473a49d7501808b9633f29782', value:1000, gas:"0", gasPrice:"0", nonce:"1",input:""}, "123")
 	var subTx ctypes.Transaction
 	subTx.Data.From = tx.Data.From
@@ -910,6 +910,7 @@ func GetCrossSubTx(tx ctypes.Transaction) (ctypes.Transaction) {
 	subTx.Data.GasLimit = tx.Data.GasLimit
 	subTx.Data.Price = subTx.Data.Price
 	subTx.Data.AccountNonce = subTx.Data.AccountNonce + 1
+	subTx.Data.Payload = web3cmn.HexToBytes(toAddr)
 
 	return subTx
 }
